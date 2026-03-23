@@ -21,7 +21,7 @@
 
     <div id="login">
         <h1 style="margin-top:60px; text-align:center;">🔒 Gesperrt</h1>
-        <input type="password" id="pw" placeholder="Passwort..." onkeypress="if(event.key==='Enter')check()">
+        <input type="password" id="pw" placeholder="🔑 Passwort" onkeypress="if(event.key==='Enter')check()">
         <button onclick="check()" style="width:100%; padding:15px; background:#00ff88; border:none; border-radius:10px; font-weight:bold; color:#000;">ÖFFNEN</button>
     </div>
 
@@ -29,8 +29,8 @@
         <button id="exit-btn" onclick="logout()">EXIT</button>
         <div class="status-bar" id="stat">Anzahl: 0</div>
         <h2 style="color:#00ff88; text-align:center;">⏱ Multi-Stoppuhr</h2>
-        <input type="text" id="inp" placeholder="Kombi eingeben..." onkeypress="if(event.key==='Enter')addWatch()">
-        <input type="text" id="srch" placeholder="🔍Suchen..." oninput="render()">
+        <input type="text" id="inp" placeholder="🫆 ID eingeben" onkeypress="if(event.key==='Enter')addWatch()">
+        <input type="text" id="srch" placeholder="🔍 ID suchen..." oninput="render()">
         <div id="list"></div>
     </div>
 
@@ -45,7 +45,7 @@
                 document.getElementById('login').style.display = 'none';
                 document.getElementById('app').style.display = 'block';
                 document.getElementById('pw').value = ''; // Passwortfeld leeren
-            } else { alert("Falsch!"); }
+            } else { alert("Falsch ❌"); }
         }
 
         // NEU: Die Logout Funktion für den Exit-Button
