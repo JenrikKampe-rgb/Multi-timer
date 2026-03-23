@@ -5,117 +5,113 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Timer Pro</title>
     <style>
-        body { background: #000; color: #fff; font-family: -apple-system, sans-serif; text-align: center; margin: 0; padding: 0; }
-        #login, #app { padding: 20px; box-sizing: border-box; width: 100%; }
-        
-        /* STATUS LEISTE */
-        .status-bar { background: #00ff88; color: #000; padding: 15px; font-weight: bold; font-size: 18px; margin-bottom: 15px; border-radius: 0 0 15px 15px; }
-
-        /* EINGABEFELDER */
-        input { padding: 15px; font-size: 18px; border-radius: 10px; border: 1px solid #444; background: #222; color: #fff; width: 90%; margin-bottom: 10px; -webkit-appearance: none; }
-        .search-field { border-color: #666; background: #111; font-size: 16px; }
-
-        /* TIMER BOXEN */
-        .timer-box { border: 2px solid #00ff88; margin: 15px 0; padding: 12px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; background: #111; }
-        .paused { border-color: #ff9800 !important; opacity: 0.5; }
-        
-        .controls { display: flex; align-items: center; }
-        .btn { font-size: 30px; padding: 5px 12px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; }
+        #login, #app { padding: 20px; box-sizing: border-box; }
+        .status-bar { background: #00ff88; color: #000; padding: 10px; border-radius: 10px; margin-bottom: 20px; font-weight: bold; text-align: center; }
+        input { padding: 15px; font-size: 18px; width: 100%; box-sizing: border-box; border-radius: 10px; border: 1px solid #333; background: #222; color: #fff; margin-bottom: 10px; }
+        .timer-box { border: 2px solid #00ff88; margin-bottom: 15px; padding: 15px; border-radius: 15px; background: #111; }
+        .controls { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+        .btn { font-size: 35px; padding: 10px 20px; cursor: pointer; background: none; border: none; color: #00ff88; -webkit-tap-highlight-color: transparent; }
         .del { color: #ff4444; }
+        /* Exit Button Design */
+        #exit-btn { position: fixed; top: 15px; right: 15px; background: #ff4444; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; z-index: 1000; }
     </style>
 </head>
 <body>
 
     <div id="login">
-        <h1 style="margin-top:60px">🔐 Gesperrt</h1>
-        <input type="password" id="pw" placeholder="Passwort..." oninput="check()">
+        <h1 style="margin-top:60px; text-align:center;">🔒 Gesperrt</h1>
+        <input type="password" id="pw" placeholder="Passwort..." onkeypress="if(event.key==='Enter')check()">
+        <button onclick="check()" style="width:100%; padding:15px; background:#00ff88; border:none; border-radius:10px; font-weight:bold; color:#000;">ÖFFNEN</button>
     </div>
 
-    <div id="app" style="display:none">
-        <div class="status-bar" id="stat">Anzahl Timer: 0</div>
-        <h2 style="color:#00ff88">⏱ Multi-Timer</h2>
-        
-        <input type="number" id="inp" placeholder="Zahl + Enter" onkeypress="handleEnter(event)">
-        <input type="text" id="srch" class="search-field" placeholder="🔍 Timer suchen..." oninput="draw()">
-        
+    <div id="app" style="display:none;">
+        <button id="exit-btn" onclick="logout()">EXIT</button>
+        <div class="status-bar" id="stat">Anzahl: 0</div>
+        <h2 style="color:#00ff88; text-align:center;">⏱ Multi-Stoppuhr</h2>
+        <input type="text" id="inp" placeholder="Kombi eingeben..." onkeypress="if(event.key==='Enter')addWatch()">
+        <input type="text" id="srch" placeholder="Suchen..." oninput="render()">
         <div id="list"></div>
     </div>
 
     <script>
-        var pwStr = "38536945527";
-        var timers = {};
+        var pw1 = "38536945527"; 
+        var pw2 = "9999"; // Zweites Passwort hier ändern
+        var stopwatches = {};
 
         function check() {
             var val = document.getElementById('pw').value;
-            if (val === pwStr) {
+            if (val === pw1 || val === pw2) {
                 document.getElementById('login').style.display = 'none';
                 document.getElementById('app').style.display = 'block';
-            }
+                document.getElementById('pw').value = ''; // Passwortfeld leeren
+            } else { alert("Falsch!"); }
         }
 
-        function handleEnter(e) {
-            if (e.keyCode === 13 || e.which === 13) {
-                var n = document.getElementById('inp').value;
-                if (n !== "") {
-                    if (!timers[n]) {
-                        timers[n] = { t: 0, r: true };
-                    }
-                    document.getElementById('inp').value = "";
-                    draw();
-                }
-            }
+        // NEU: Die Logout Funktion für den Exit-Button
+        function logout() {
+            document.getElementById('app').style.display = 'none';
+            document.getElementById('login').style.display = 'block';
+            document.getElementById('pw').value = ''; // Feld leeren für neue Eingabe
+        }
+
+        function addWatch() {
+            var k = document.getElementById('inp').value;
+            if (!k) return;
+            var id = "sw_" + Date.now();
+            stopwatches[id] = { t: 0, r: true, k: k };
+            document.getElementById('inp').value = '';
+            render();
         }
 
         function toggle(id) {
-            timers[id].r = !timers[id].r;
-            draw();
+            stopwatches[id].r = !stopwatches[id].r;
+            var btn = document.getElementById('btn_' + id);
+            if(btn) btn.innerText = stopwatches[id].r ? '⏸' : '▶️';
         }
 
-        function remove(id) {
-            delete timers[id];
-            draw();
+        function del(id) {
+            delete stopwatches[id];
+            render();
         }
 
-        function draw() {
-            var list = document.getElementById('list');
+        function formatTime(s) {
+            var m = Math.floor(s / 60);
+            var sec = s % 60;
+            return m + ":" + (sec < 10 ? '0' : '') + sec;
+        }
+
+        function render() {
             var s = document.getElementById('srch').value.toLowerCase();
-            var html = "";
+            var out = '';
             var count = 0;
-
-            for (var id in timers) {
-                count++;
-                if (s !== "" && id.indexOf(s) === -1) continue;
-
-                var isR = timers[id].r;
-                var style = isR ? "" : "paused";
-                var icon = isR ? "⏸️" : "▶️";
-
-                html += '<div class="timer-box ' + style + '">' +
-                    '<div style="text-align:left"><b>#' + id + '</b><br>' +
-                    '<span id="v-' + id + '" style="font-size:26px; font-family:monospace; color:#00ff88; font-weight:bold">' + fmt(timers[id].t) + '</span></div>' +
-                    '<div class="controls">' +
-                    '<div class="btn" onclick="toggle(\'' + id + '\')">' + icon + '</div>' +
-                    '<div class="btn del" onclick="remove(\'' + id + '\')">❌</div>' +
-                    '</div></div>';
+            for (var id in stopwatches) {
+                var sw = stopwatches[id];
+                if (sw.k.toLowerCase().includes(s)) {
+                    count++;
+                    out += `<div class="timer-box" id="box_${id}">
+                        <div style="color:#888">Kombi: ${sw.k}</div>
+                        <div style="font-size:32px; font-weight:bold;" id="time_${id}">${formatTime(sw.t)}</div>
+                        <div class="controls">
+                            <button class="btn" id="btn_${id}" onclick="toggle('${id}')">${sw.r ? '⏸' : '▶️'}</button>
+                            <button class="btn del" onclick="del('${id}')">🗑</button>
+                        </div>
+                    </div>`;
+                }
             }
-            list.innerHTML = html;
-            document.getElementById('stat').innerHTML = "Anzahl Timer: " + count;
+            document.getElementById('list').innerHTML = out;
+            document.getElementById('stat').innerText = "Anzahl: " + count;
         }
 
-        function fmt(ms) {
-            var s = Math.floor(ms/1000), h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
-            var hStr = h < 10 ? "0" + h : h;
-            var mStr = m < 10 ? "0" + m : m;
-            var sStr = (s%60) < 10 ? "0" + (s%60) : (s%60);
-            return hStr + ":" + mStr + ":" + sStr;
-        }
-
+        // MOTOR: Aktualisiert nur die Zeit-Texte
         setInterval(function() {
-            for (var id in timers) {
-                if (timers[id].r) {
-                    timers[id].t += 1000;
-                    var el = document.getElementById('v-' + id);
-                    if (el) el.innerHTML = fmt(timers[id].t);
+            for (var id in stopwatches) {
+                if (stopwatches[id].r) {
+                    stopwatches[id].t++;
+                    var timeDisplay = document.getElementById('time_' + id);
+                    if (timeDisplay) {
+                        timeDisplay.innerText = formatTime(stopwatches[id].t);
+                    }
                 }
             }
         }, 1000);
